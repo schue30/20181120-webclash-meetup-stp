@@ -1,0 +1,51 @@
+version: '2'
+
+services:
+  mysql:
+    image: mariadb:10.3.8
+    container_name: project-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=project
+      - MYSQL_PASSWORD=project
+      - MYSQL_DATABASE=my-project
+    volumes:
+      - ./db-dump/:/docker-entrypoint-initdb.d/:ro
+      - mysql-data:/var/lib/mysql:rw
+  php:
+    image: registry.schue.at/project/php:base
+    container_name: project-php
+    ports:
+      - 127.0.0.1:80:80
+    environment:
+      - MAIL_USERNAME=
+      - MAIL_PASSWORD=
+      - MANDRILL_KEY=
+      - DB_HOST=mysql
+      - DB_USER=project
+      - DB_PASSWORD=project
+      - DB_DATABSE=my-project
+      - CACHE_DURATION="+1 seconds"
+    volumes:
+      - ./:/var/www/:rw,cached
+  composer-install:
+    image: registry.schue.at/project/php:base
+    container_name: project-composer
+    user: '1000:1000'
+    command: php composer.phar install
+    volumes:
+      - ./:/var/www/:rw
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:4.8
+    container_name: project-phpmyadmin
+    ports:
+      - 127.0.0.1:81:80
+    environment:
+      - PMA_HOST=mysql
+      - PMA_USER=root
+      - PMA_PASSWORD=root
+
+
+volumes:
+  mysql-data:
+
